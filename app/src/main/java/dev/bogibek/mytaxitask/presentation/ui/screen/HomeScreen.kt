@@ -1,4 +1,4 @@
-package dev.bogibek.mytaxitask.ui.screen
+package dev.bogibek.mytaxitask.presentation.ui.screen
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
-import dev.bogibek.mytaxitask.ui.theme.app.appColors
+import dev.bogibek.mytaxitask.presentation.ui.theme.custom.appColors
 
 @Composable
 fun HomeScreen(
@@ -23,12 +23,12 @@ fun HomeScreen(
             .background(MaterialTheme.appColors.mainBgColor)
     ) {
         Column {
-            Text(text = "Hello world")
+            Text(text = "Hello salom")
         }
     }
 }
 
-@Preview(showSystemUi = true, device = Devices.DEFAULT, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(showSystemUi = true, device = Devices.DEFAULT, uiMode = Configuration.UI_MODE_NIGHT_NO)
 @Composable
 private fun HomeScreenPreview() {
     HomeScreen()

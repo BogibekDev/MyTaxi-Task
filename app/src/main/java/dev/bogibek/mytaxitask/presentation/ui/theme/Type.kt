@@ -1,4 +1,4 @@
-package dev.bogibek.mytaxitask.ui.theme
+package dev.bogibek.mytaxitask.presentation.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
