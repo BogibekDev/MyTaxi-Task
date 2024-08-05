@@ -1,4 +1,4 @@
-package dev.bogibek.mytaxitask.ui.theme.app
+package dev.bogibek.mytaxitask.presentation.ui.theme.custom
 
 import androidx.compose.ui.graphics.Color
 
