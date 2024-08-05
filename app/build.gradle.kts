@@ -75,6 +75,14 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    //map
+    implementation(libs.android)
+    implementation(libs.maps.compose)
+
+    implementation(libs.play.services.location)
+
+
+
     // Lifecycle ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
@@ -122,6 +130,7 @@ dependencies {
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
 }
 
 kapt {

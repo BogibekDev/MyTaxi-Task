@@ -11,8 +11,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import com.mapbox.geojson.Point
+import com.mapbox.maps.MapboxExperimental
+import com.mapbox.maps.extension.compose.MapboxMap
+import com.mapbox.maps.extension.compose.animation.viewport.MapViewportState
 import dev.bogibek.mytaxitask.presentation.ui.theme.custom.appColors
 
+@OptIn(MapboxExperimental::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier
@@ -20,11 +25,26 @@ fun HomeScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.appColors.mainBgColor)
     ) {
-        Column {
-            Text(text = "Hello salom")
+
+        MapboxMap(
+            modifier = Modifier.fillMaxSize(),
+            mapViewportState = MapViewportState().apply {
+                setCameraOptions {
+                    zoom(13.6)
+                    center(Point.fromLngLat(60.60766446461897, 41.5608633141494))
+                    pitch(0.0)
+                    bearing(0.0)
+                }
+            }
+        ) {
+
         }
+
+        Column {
+
+        }
+
     }
 }
 
