@@ -18,8 +18,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Abc
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -29,19 +31,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.google.android.gms.location.LocationServices
 import com.mapbox.geojson.Point
 import com.mapbox.maps.MapboxExperimental
 import com.mapbox.maps.Style
+import com.mapbox.maps.dsl.cameraOptions
 import com.mapbox.maps.extension.compose.MapboxMap
-import com.mapbox.maps.extension.compose.animation.viewport.MapViewportState
 import com.mapbox.maps.extension.compose.animation.viewport.rememberMapViewportState
 import com.mapbox.maps.extension.compose.annotation.ViewAnnotation
 import com.mapbox.maps.extension.compose.style.MapStyle
+import com.mapbox.maps.plugin.animation.MapAnimationOptions
 import com.mapbox.maps.viewannotation.geometry
 import com.mapbox.maps.viewannotation.viewAnnotationOptions
 import dev.bogibek.mytaxitask.mustPermissions
 import dev.bogibek.mytaxitask.presentation.ui.view.PermissionNeedScreen
 import dev.bogibek.mytaxitask.utils.hasPermissions
+import dev.bogibek.mytaxitask.zoomDefault
 
 @OptIn(MapboxExperimental::class)
 @Composable
@@ -53,26 +58,27 @@ fun HomeScreen(
         mutableStateOf(context.hasPermissions())
     }
     val zoom = remember {
-        mutableStateOf(12.0)
+        mutableStateOf(zoomDefault)
     }
 
     val mapViewportState = rememberMapViewportState {
         setCameraOptions {
-            zoom(13.6)
+            zoom(zoom.value)
             center(Point.fromLngLat(60.60766446461897, 41.5608633141494))
         }
     }
 
-//    LaunchedEffect(true) {
-//        mapViewportState.flyTo(
-//            cameraOptions = cameraOptions {
-//                center(Point.fromLngLat(60.60766446461897, 41.5608633141494))
-//            },
-//            MapAnimationOptions.mapAnimationOptions {
-//                duration(1500L)
-//            }
-//        )
-//    }
+
+    LaunchedEffect(zoom.value) {
+        mapViewportState.flyTo(
+            cameraOptions = cameraOptions {
+                zoom(zoom.value)
+            },
+            animationOptions = MapAnimationOptions.mapAnimationOptions {
+                duration(2000L)
+            }
+        )
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -81,6 +87,11 @@ fun HomeScreen(
             hasPermission.value = true
         }
     }
+
+    val locationClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
+
 
     if (hasPermission.value) {
         Box(
@@ -96,19 +107,19 @@ fun HomeScreen(
                 }
 
             ) {
-//                ViewAnnotation(
-//                    options = viewAnnotationOptions {
-//                        geometry(Point.fromLngLat(60.60766446461897, 41.5608633141494))
-//                        allowOverlap(true)
-//                    }
-//                ) {
-//                    Icon(
-//                        modifier = Modifier.size(50.dp),
-//                        tint = Color.Yellow,
-//                        imageVector = Icons.Default.DirectionsCar,
-//                        contentDescription = "Car",
-//                    )
-//                }
+                ViewAnnotation(
+                    options = viewAnnotationOptions {
+                        geometry(Point.fromLngLat(60.60766446461897, 41.5608633141494))
+                        allowOverlap(true)
+                    }
+                ) {
+                    Icon(
+                        modifier = Modifier.size(30.dp),
+                        tint = Color.Yellow,
+                        imageVector = Icons.Default.DirectionsCar,
+                        contentDescription = "Car",
+                    )
+                }
             }
 
             Column(
@@ -121,7 +132,7 @@ fun HomeScreen(
 
                 Box(modifier = Modifier
                     .clickable {
-                        if (zoom.value < 18) {
+                        if (zoom.value < 18.0) {
                             zoom.value++
                         }
                     }
@@ -134,14 +145,28 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 Box(modifier = Modifier
                     .clickable {
-                        if (zoom.value > 0) {
+                        if (zoom.value > 0.0) {
                             zoom.value--
                         }
                     }
                     .background(Color.White)
                     .padding(all = 16.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.Abc, contentDescription = "zoom in")
+                    Icon(imageVector = Icons.Default.Abc, contentDescription = "zoom out")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                Box(modifier = Modifier
+                    .clickable {
+                        if (context.hasPermissions()) {
+//                            getLocation()
+                            zoom.value = zoomDefault
+                        }
+                    }
+                    .background(Color.White)
+                    .padding(all = 16.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.LocationOn, contentDescription = "location")
                 }
 
             }
