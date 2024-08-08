@@ -4,16 +4,15 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import dev.bogibek.mytaxitask.data.location.DefaultLocationTracker
-import dev.bogibek.mytaxitask.domain.location.LocationTracker
+import dev.bogibek.mytaxitask.data.repository.AppRepositoryImpl
+import dev.bogibek.mytaxitask.domain.repository.AppRepository
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
 
-    // TODO: change it
     @Binds
     @Singleton
-    abstract fun bindLocationRepository(defaultLocationTracker: DefaultLocationTracker): LocationTracker
+    abstract fun bindAppRepository(appRepositoryImpl: AppRepositoryImpl): AppRepository
 }

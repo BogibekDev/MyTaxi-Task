@@ -8,6 +8,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dev.bogibek.mytaxitask.data.local.LocationDao
 import dev.bogibek.mytaxitask.data.local.LocationDatabase
 import javax.inject.Singleton
 
@@ -24,6 +25,12 @@ object AppModule {
             "location.db"
         ).build()
 
+    }
+
+
+    @Provides
+    fun provideLocationDao(appDatabase: LocationDatabase): LocationDao {
+        return appDatabase.dao
     }
 
     @Provides

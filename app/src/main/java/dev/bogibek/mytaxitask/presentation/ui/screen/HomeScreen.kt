@@ -22,6 +22,8 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -31,7 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.google.android.gms.location.LocationServices
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.mapbox.geojson.Point
 import com.mapbox.maps.MapboxExperimental
 import com.mapbox.maps.Style
@@ -43,10 +45,11 @@ import com.mapbox.maps.extension.compose.style.MapStyle
 import com.mapbox.maps.plugin.animation.MapAnimationOptions
 import com.mapbox.maps.viewannotation.geometry
 import com.mapbox.maps.viewannotation.viewAnnotationOptions
-import dev.bogibek.mytaxitask.mustPermissions
 import dev.bogibek.mytaxitask.presentation.ui.view.PermissionNeedScreen
-import dev.bogibek.mytaxitask.utils.hasPermissions
-import dev.bogibek.mytaxitask.zoomDefault
+import dev.bogibek.mytaxitask.presentation.viewmodel.HomeViewModel
+import dev.bogibek.mytaxitask.utils.hasLocationPermissions
+import dev.bogibek.mytaxitask.utils.mustPermissions
+import dev.bogibek.mytaxitask.utils.zoomDefault
 
 @OptIn(MapboxExperimental::class)
 @Composable
@@ -54,8 +57,10 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val viewModel: HomeViewModel = hiltViewModel()
+    val state by viewModel.state.collectAsState()
     val hasPermission = remember {
-        mutableStateOf(context.hasPermissions())
+        mutableStateOf(context.hasLocationPermissions())
     }
     val zoom = remember {
         mutableStateOf(zoomDefault)
@@ -64,10 +69,11 @@ fun HomeScreen(
     val mapViewportState = rememberMapViewportState {
         setCameraOptions {
             zoom(zoom.value)
-            center(Point.fromLngLat(60.60766446461897, 41.5608633141494))
+            state.location?.let {
+                center(Point.fromLngLat(it.longitude, it.latitude))
+            }
         }
     }
-
 
     LaunchedEffect(zoom.value) {
         mapViewportState.flyTo(
@@ -83,14 +89,11 @@ fun HomeScreen(
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
-        if (context.hasPermissions()) {
+        if (context.hasLocationPermissions()) {
             hasPermission.value = true
         }
     }
 
-    val locationClient = remember {
-        LocationServices.getFusedLocationProviderClient(context)
-    }
 
 
     if (hasPermission.value) {
@@ -107,18 +110,20 @@ fun HomeScreen(
                 }
 
             ) {
-                ViewAnnotation(
-                    options = viewAnnotationOptions {
-                        geometry(Point.fromLngLat(60.60766446461897, 41.5608633141494))
-                        allowOverlap(true)
+                state.location?.let {
+                    ViewAnnotation(
+                        options = viewAnnotationOptions {
+                            geometry(Point.fromLngLat(it.longitude, it.latitude))
+                            allowOverlap(true)
+                        }
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(30.dp),
+                            tint = Color.Yellow,
+                            imageVector = Icons.Default.DirectionsCar,
+                            contentDescription = "Car",
+                        )
                     }
-                ) {
-                    Icon(
-                        modifier = Modifier.size(30.dp),
-                        tint = Color.Yellow,
-                        imageVector = Icons.Default.DirectionsCar,
-                        contentDescription = "Car",
-                    )
                 }
             }
 
@@ -158,7 +163,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 Box(modifier = Modifier
                     .clickable {
-                        if (context.hasPermissions()) {
+                        if (context.hasLocationPermissions()) {
 //                            getLocation()
                             zoom.value = zoomDefault
                         }
