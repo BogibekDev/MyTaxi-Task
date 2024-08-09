@@ -2,7 +2,6 @@ package dev.bogibek.mytaxitask.service
 
 
 import android.annotation.SuppressLint
-import android.app.Application
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,6 +9,7 @@ import android.content.Context
 import android.location.LocationManager
 import android.os.Build
 import android.os.Looper
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
@@ -23,9 +23,7 @@ import dev.bogibek.mytaxitask.R
 import dev.bogibek.mytaxitask.domain.entities.Location
 import dev.bogibek.mytaxitask.domain.use_case.AddNewLocation
 import dev.bogibek.mytaxitask.utils.hasLocationPermissions
-import dev.bogibek.mytaxitask.utils.hasNotificationPermission
 import dev.bogibek.mytaxitask.utils.interval
-import dev.bogibek.mytaxitask.utils.minInterval
 import dev.bogibek.mytaxitask.utils.notificationChannelId
 import dev.bogibek.mytaxitask.utils.notificationChannelName
 import dev.bogibek.mytaxitask.utils.notificationId
@@ -35,8 +33,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class LocationService : LifecycleService() {
-    @Inject
-    lateinit var app: Application
 
     @Inject
     lateinit var locationClient: FusedLocationProviderClient
@@ -44,29 +40,19 @@ class LocationService : LifecycleService() {
     @Inject
     lateinit var addNewLocation: AddNewLocation
 
-    lateinit var newLocation: Location
+    var newLocation: Location? = null
+    private lateinit var locationCallBack: LocationCallback
 
-    private val locationCallBack = object : LocationCallback() {
-        override fun onLocationResult(result: LocationResult) {
-            super.onLocationResult(result)
-            val lastLocation = result.lastLocation
-            lastLocation?.let {
-                newLocation = Location(longitude = it.longitude, latitude = it.latitude)
-                lifecycleScope.launch {
-                    addNewLocation(newLocation)
-                }
-            }
-        }
-    }
+    private lateinit var manager: NotificationManager
 
 
     override fun onCreate() {
         super.onCreate()
-        if (app.hasNotificationPermission()) {
-            createNotificationChannel()
-            startForeground(notificationId, createNotification())
-        }
+        Log.d("Service", "onCreate: ")
+        manager = getSystemService(NotificationManager::class.java) as NotificationManager
         setupLocationTracking()
+        createNotificationChannel()
+        startForeground(notificationId, createNotification())
     }
 
     override fun onDestroy() {
@@ -76,24 +62,38 @@ class LocationService : LifecycleService() {
 
     @SuppressLint("MissingPermission")
     private fun setupLocationTracking() {
-        val locationRequest = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY, interval
-        ).apply {
-            setMinUpdateIntervalMillis(minInterval)
-            setWaitForAccurateLocation(false)
-        }.build()
 
-        val locationManager = app.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        locationCallBack = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                super.onLocationResult(result)
+                Log.d("Service", "onLocationResult:${result.lastLocation} ")
+                val lastLocation = result.lastLocation
+                lastLocation?.let {
+                    newLocation = Location(longitude = it.longitude, latitude = it.latitude)
+                    Log.d("Service", "onLocationResult: $newLocation")
+                    lifecycleScope.launch {
+                        addNewLocation(newLocation!!)
+                        updateNotification()
+                    }
+                }
+            }
+        }
+
+        val locationRequest = LocationRequest
+            .Builder(Priority.PRIORITY_HIGH_ACCURACY, interval)
+            //.setMinUpdateDistanceMeters(minUpdateDistanceMeters)
+            .build()
+
+
+        val locationManager = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ||
                 locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
 
-        if (!app.hasLocationPermissions() || !isGpsEnabled) return
-
-        locationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallBack,
-            Looper.getMainLooper()
-        )
+        if (this.hasLocationPermissions() || isGpsEnabled) {
+            locationClient.requestLocationUpdates(
+                locationRequest, locationCallBack, Looper.getMainLooper()
+            )
+        }
     }
 
 
@@ -104,7 +104,6 @@ class LocationService : LifecycleService() {
                 notificationChannelName,
                 NotificationManager.IMPORTANCE_LOW
             )
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
         }
     }
@@ -112,9 +111,15 @@ class LocationService : LifecycleService() {
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, notificationChannelId)
             .setContentTitle(notificationTitle)
-            .setContentText("Latitude: ${newLocation.latitude}\nLongitude: ${newLocation.longitude}")
+            .setContentText(if (newLocation != null) "Latitude: ${newLocation?.latitude}\nLongitude: ${newLocation?.longitude}" else "Loading ...")
             .setSmallIcon(R.mipmap.ic_launcher_round)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build()
+    }
+
+    private fun updateNotification() {
+        val updatedNotification = createNotification()
+        manager.notify(notificationId, updatedNotification)
     }
 
 }

@@ -106,31 +106,7 @@ dependencies {
     // Extended Icons
     implementation(libs.androidx.material.icons.extended)
 
-    // Local Tests
-    testImplementation(libs.junit)
-    testImplementation(libs.truth)
-    testImplementation(libs.androidx.core)
-    testImplementation(libs.androidx.core.testing)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.mockk)
-    debugImplementation(libs.ui.test.manifest)
-
-    // Instrumented Tests
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    androidTestImplementation(libs.core.ktx)
-    androidTestImplementation(libs.androidx.core.testing)
-    androidTestImplementation(libs.androidx.runner)
-    androidTestImplementation(libs.kotlinx.coroutines.test)
-    androidTestImplementation(libs.truth)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.mockk.android)
-    androidTestImplementation(libs.hilt.android.testing)
-    kaptAndroidTest(libs.hilt.android.compiler)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
+   
 
 }
 
